@@ -11,65 +11,75 @@ import { UserResolver } from "./resolvers/user";
 import redis from "redis";
 import session from "express-session";
 import connectRedis from "connect-redis";
+import cors from "cors";
 
 if (!__prod__) {
-    // load dev environment vars
-    require("dotenv").config();
+  // load dev environment vars
+  require("dotenv").config();
 }
 
 const main = async () => {
-    const orm = await MikroORM.init(microConfig);
-    await orm.getMigrator().up(); // runs the migrations when the server runs
+  const orm = await MikroORM.init(microConfig);
+  await orm.getMigrator().up(); // runs the migrations when the server runs
 
-    const app = express();
+  const app = express();
 
-    const RedisStore = connectRedis(session);
-    const redisClient = redis.createClient();
+  const RedisStore = connectRedis(session);
+  const redisClient = redis.createClient();
+  app.use(
+    cors({
+      origin: "http://localhost:3000",
+      credentials: true,
+    })
+  );
 
-    app.use(
-        session({
-            name: "qid",
-            store: new RedisStore({
-                client: redisClient,
-                disableTouch: true,
-            }),
-            cookie: {
-                maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
-                httpOnly: true,
-                sameSite: "lax", // csrf
-                secure: __prod__, // cookie only works in https - only on in prod
-            },
-            saveUninitialized: false,
-            secret: "asjdfoiaeyufasdhnfzxc",
-            resave: false,
-        })
-    );
+  app.use(
+    session({
+      name: "qid",
+      store: new RedisStore({
+        client: redisClient,
+        disableTouch: true,
+      }),
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+        httpOnly: true,
+        sameSite: "lax", // csrf
+        secure: __prod__, // cookie only works in https - only on in prod
+      },
+      saveUninitialized: false,
+      secret: "asjdfoiaeyufasdhnfzxc",
+      resave: false,
+    })
+  );
 
-    const apolloServer = new ApolloServer({
-        schema: await buildSchema({
-            resolvers: [HelloResolver, PostResolver, UserResolver],
-            validate: false,
-        }),
-        context: ({ req, res }) => ({ em: orm.em, req, res }),
-    });
+  const apolloServer = new ApolloServer({
+    schema: await buildSchema({
+      resolvers: [HelloResolver, PostResolver, UserResolver],
+      validate: false,
+    }),
+    context: ({ req, res }) => ({ em: orm.em, req, res }),
+  });
 
-    await apolloServer.start();
+  await apolloServer.start();
+  // apollo can set the cors policy for us
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  });
 
-    apolloServer.applyMiddleware({ app });
+  app.listen(4000, () => {
+    console.log("server started on localhost:4000");
+  });
 
-    app.listen(4000, () => {
-        console.log("server started on localhost:4000");
-    });
+  // CREATE AND WRITE
+  // const post = orm.em.create(Post, {title: 'my first post'});
+  // await orm.em.persistAndFlush(post);
 
-    // CREATE AND WRITE
-    // const post = orm.em.create(Post, {title: 'my first post'});
-    // await orm.em.persistAndFlush(post);
-
-    // READ
-    // const posts = await orm.em.find(Post, {});
-    // console.log(posts);
+  // READ
+  // const posts = await orm.em.find(Post, {});
+  // console.log(posts);
 };
 
 main().catch((err) => {
-    console.error(err);
+  console.error(err);
 });
