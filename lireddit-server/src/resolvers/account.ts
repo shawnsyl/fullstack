@@ -1,4 +1,4 @@
-import { User } from "../entities/User";
+import { Account } from "../entities/Account";
 import { MyContext } from "../types";
 import {
   Arg,
@@ -35,32 +35,32 @@ class FieldError {
 }
 
 @ObjectType()
-class UserResponse {
+class AccountResponse {
   @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[];
 
-  @Field(() => User, { nullable: true })
-  user?: User;
+  @Field(() => Account, { nullable: true })
+  account?: Account;
 }
 
 @Resolver()
-export class UserResolver {
-  @Query(() => User, { nullable: true })
-  async me(@Ctx() { em, req }: MyContext): Promise<User | null> {
+export class AccountResolver {
+  @Query(() => Account, { nullable: true })
+  async me(@Ctx() { em, req }: MyContext): Promise<Account | null> {
     console.log(req.session);
     if (!req.session.userId) {
       return null;
     }
 
-    const user = await em.findOne(User, { id: req.session.userId });
-    return user;
+    const account = await em.findOne(Account, { id: req.session.userId });
+    return account;
   }
 
-  @Mutation(() => UserResponse)
+  @Mutation(() => AccountResponse)
   async register(
     @Arg("options") options: UsernamePasswordInput,
     @Ctx() { em, req }: MyContext
-  ): Promise<UserResponse> {
+  ): Promise<AccountResponse> {
     if (options.username.length <= 2) {
       return {
         errors: [
@@ -82,10 +82,10 @@ export class UserResolver {
       };
     }
     const hashedPassword = await argon2.hash(options.password);
-    let user;
+    let account;
     try {
       const result = await em
-        .createQueryBuilder(User)
+        .createQueryBuilder(Account)
         .getKnexQuery()
         .insert({
           username: options.username,
@@ -95,7 +95,7 @@ export class UserResolver {
         })
         .returning("*");
 
-      user = result[0];
+      account = result[0];
     } catch (err) {
       // duplicate username error
       if (err.code === "23505") {
@@ -111,20 +111,20 @@ export class UserResolver {
       }
     }
 
-    req.session.userId = user.id;
+    req.session.userId = account.id;
 
     return {
-      user,
+      account,
     };
   }
 
-  @Mutation(() => UserResponse)
+  @Mutation(() => AccountResponse)
   async login(
     @Arg("options") options: UsernamePasswordInput,
     @Ctx() { em, req }: MyContext
-  ): Promise<UserResponse> {
-    const user = await em.findOne(User, { username: options.username });
-    if (!user) {
+  ): Promise<AccountResponse> {
+    const account = await em.findOne(Account, { username: options.username });
+    if (!account) {
       return {
         errors: [
           {
@@ -134,7 +134,7 @@ export class UserResolver {
         ],
       };
     }
-    const valid = await argon2.verify(user.password, options.password);
+    const valid = await argon2.verify(account.password, options.password);
     if (!valid) {
       return {
         errors: [
@@ -146,10 +146,10 @@ export class UserResolver {
       };
     }
 
-    req.session.userId = user.id;
+    req.session.userId = account.id;
 
     return {
-      user,
+      account,
     };
   }
 }

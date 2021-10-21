@@ -1,6 +1,6 @@
 mutation Login($options: UsernamePasswordInput!) {
   login(options: $options) {
-    user {
+    account {
       id
       username
       createdAt

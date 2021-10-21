@@ -14,6 +14,20 @@ export type Scalars = {
   Float: number;
 };
 
+export type Account = {
+  __typename?: 'Account';
+  createdAt: Scalars['String'];
+  id: Scalars['Float'];
+  updatedAt: Scalars['String'];
+  username: Scalars['String'];
+};
+
+export type AccountResponse = {
+  __typename?: 'AccountResponse';
+  account?: Maybe<Account>;
+  errors?: Maybe<Array<FieldError>>;
+};
+
 export type FieldError = {
   __typename?: 'FieldError';
   field: Scalars['String'];
@@ -24,8 +38,8 @@ export type Mutation = {
   __typename?: 'Mutation';
   createPost: Post;
   deletePost: Scalars['Boolean'];
-  login: UserResponse;
-  register: UserResponse;
+  login: AccountResponse;
+  register: AccountResponse;
   updatePost?: Maybe<Post>;
 };
 
@@ -67,7 +81,7 @@ export type Query = {
   __typename?: 'Query';
   bye: Scalars['String'];
   hello: Scalars['String'];
-  me?: Maybe<User>;
+  me?: Maybe<Account>;
   post?: Maybe<Post>;
   posts: Array<Post>;
 };
@@ -75,20 +89,6 @@ export type Query = {
 
 export type QueryPostArgs = {
   id: Scalars['Float'];
-};
-
-export type User = {
-  __typename?: 'User';
-  createdAt: Scalars['String'];
-  id: Scalars['Float'];
-  updatedAt: Scalars['String'];
-  username: Scalars['String'];
-};
-
-export type UserResponse = {
-  __typename?: 'UserResponse';
-  errors?: Maybe<Array<FieldError>>;
-  user?: Maybe<User>;
 };
 
 export type UsernamePasswordInput = {
@@ -101,20 +101,20 @@ export type LoginMutationVariables = Exact<{
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'UserResponse', user?: { __typename?: 'User', id: number, username: string, createdAt: string, updatedAt: string } | null | undefined, errors?: Array<{ __typename?: 'FieldError', message: string, field: string }> | null | undefined } };
+export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AccountResponse', account?: { __typename?: 'Account', id: number, username: string, createdAt: string, updatedAt: string } | null | undefined, errors?: Array<{ __typename?: 'FieldError', message: string, field: string }> | null | undefined } };
 
 export type RegisterMutationVariables = Exact<{
   options: UsernamePasswordInput;
 }>;
 
 
-export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'UserResponse', errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null | undefined, user?: { __typename?: 'User', id: number, username: string } | null | undefined } };
+export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'AccountResponse', errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null | undefined, account?: { __typename?: 'Account', id: number, username: string } | null | undefined } };
 
 
 export const LoginDocument = gql`
     mutation Login($options: UsernamePasswordInput!) {
   login(options: $options) {
-    user {
+    account {
       id
       username
       createdAt
@@ -138,7 +138,7 @@ export const RegisterDocument = gql`
       field
       message
     }
-    user {
+    account {
       id
       username
     }
