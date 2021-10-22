@@ -1,5 +1,5 @@
-import { Account } from "../entities/Account";
-import { MyContext } from "../types";
+import { Account } from '../entities/Account';
+import { MyContext } from '../types';
 import {
   Arg,
   Ctx,
@@ -9,10 +9,10 @@ import {
   ObjectType,
   Query,
   Resolver,
-} from "type-graphql";
-import argon2 from "argon2";
+} from 'type-graphql';
+import argon2 from 'argon2';
 
-declare module "express-session" {
+declare module 'express-session' {
   export interface SessionData {
     userId: number;
   }
@@ -58,15 +58,15 @@ export class AccountResolver {
 
   @Mutation(() => AccountResponse)
   async register(
-    @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em, req }: MyContext
+    @Arg('options') options: UsernamePasswordInput,
+    @Ctx() { em, req }: MyContext,
   ): Promise<AccountResponse> {
     if (options.username.length <= 2) {
       return {
         errors: [
           {
-            field: "username",
-            message: "length must be greater than 2",
+            field: 'username',
+            message: 'length must be greater than 2',
           },
         ],
       };
@@ -75,8 +75,8 @@ export class AccountResolver {
       return {
         errors: [
           {
-            field: "password",
-            message: "length must be greater than 3",
+            field: 'password',
+            message: 'length must be greater than 3',
           },
         ],
       };
@@ -93,18 +93,18 @@ export class AccountResolver {
           created_at: new Date(),
           updated_at: new Date(),
         })
-        .returning("*");
+        .returning('*');
 
       account = result[0];
     } catch (err) {
       // duplicate username error
-      if (err.code === "23505") {
+      if (err.code === '23505') {
         //|| err.detail.includes('already exists')) {
         return {
           errors: [
             {
-              field: "username",
-              message: "username taken",
+              field: 'username',
+              message: 'username taken',
             },
           ],
         };
@@ -120,15 +120,15 @@ export class AccountResolver {
 
   @Mutation(() => AccountResponse)
   async login(
-    @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em, req }: MyContext
+    @Arg('options') options: UsernamePasswordInput,
+    @Ctx() { em, req }: MyContext,
   ): Promise<AccountResponse> {
     const account = await em.findOne(Account, { username: options.username });
     if (!account) {
       return {
         errors: [
           {
-            field: "username",
+            field: 'username',
             message: "That username doesn't exist",
           },
         ],
@@ -139,8 +139,8 @@ export class AccountResolver {
       return {
         errors: [
           {
-            field: "password",
-            message: "Incorrect password",
+            field: 'password',
+            message: 'Incorrect password',
           },
         ],
       };
