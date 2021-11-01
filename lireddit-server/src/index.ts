@@ -12,13 +12,16 @@ import redis from 'redis';
 import session from 'express-session';
 import connectRedis from 'connect-redis';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import { sendEmail } from './utils/sendEmail';
 
 if (!__prod__) {
   // load dev environment vars
-  require('dotenv').config();
+  dotenv.config();
 }
 
 const main = async () => {
+  sendEmail('seyoungl@seyoungl.com', 'asdf');
   const orm = await MikroORM.init(microConfig);
   await orm.getMigrator().up(); // runs the migrations when the server runs
 

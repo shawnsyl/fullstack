@@ -21,6 +21,8 @@ declare module 'express-session' {
 @InputType()
 class UsernamePasswordInput {
   @Field()
+  email: string;
+  @Field()
   username: string;
   @Field()
   password: string;
@@ -45,6 +47,12 @@ class AccountResponse {
 
 @Resolver()
 export class AccountResolver {
+  @Mutation(() => Boolean)
+  async forgotPassword(@Arg('email') email: string, @Ctx() { em }: MyContext) {
+    // const accoun{t = await em.findOne(Account, { email });
+    return true;
+  }
+
   @Query(() => Account, { nullable: true })
   async me(@Ctx() { em, req }: MyContext): Promise<Account | null> {
     console.log(req.session);
@@ -61,6 +69,16 @@ export class AccountResolver {
     @Arg('options') options: UsernamePasswordInput,
     @Ctx() { em, req }: MyContext,
   ): Promise<AccountResponse> {
+    if (!options.email.includes('@')) {
+      return {
+        errors: [
+          {
+            field: 'email',
+            message: 'invalid email',
+          },
+        ],
+      };
+    }
     if (options.username.length <= 2) {
       return {
         errors: [
@@ -89,6 +107,7 @@ export class AccountResolver {
         .getKnexQuery()
         .insert({
           username: options.username,
+          email: options.email,
           password: hashedPassword,
           created_at: new Date(),
           updated_at: new Date(),
@@ -120,21 +139,27 @@ export class AccountResolver {
 
   @Mutation(() => AccountResponse)
   async login(
-    @Arg('options') options: UsernamePasswordInput,
+    @Arg('usernameOrEmail') usernameOrEmail: string,
+    @Arg('password') password: string,
     @Ctx() { em, req }: MyContext,
   ): Promise<AccountResponse> {
-    const account = await em.findOne(Account, { username: options.username });
+    const account = await em.findOne(
+      Account,
+      usernameOrEmail.includes('@')
+        ? { email: usernameOrEmail }
+        : { username: usernameOrEmail },
+    );
     if (!account) {
       return {
         errors: [
           {
-            field: 'username',
+            field: 'usernameOrEmail',
             message: "That username doesn't exist",
           },
         ],
       };
     }
-    const valid = await argon2.verify(account.password, options.password);
+    const valid = await argon2.verify(account.password, password);
     if (!valid) {
       return {
         errors: [
